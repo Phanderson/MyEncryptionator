@@ -51,72 +51,82 @@ class DecryptionScreenSettingsState extends State<DecryptionScreenSettings> {
       body: ListView(
         padding: const EdgeInsets.all(8.0),
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  height: 200,
-                  child: TextField(
-                    controller: _keyController,
-                    maxLines: null,
-                    expands: true,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Decryption Key',
-                      labelStyle: TextStyle(color: Colors.white),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                height: 200,
+                child: TextField(
+                  controller: _keyController,
+                  maxLines: null,
+                  expands: true,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Private Key',
+                    labelStyle: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () {
+                        // Speichere den privaten Schlüssel
+                        saveDecryptionPrivateKey(_keyController.text);
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.key_outlined),
+                          SizedBox(width: 8),
+                          Text('Use this private key'),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    // Speichere den privaten Schlüssel
-                    saveDecryptionPrivateKey(_keyController.text);
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.white,
+                  Expanded(
+                    child: TextButton(
+                      onPressed: _deleteText,
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.delete_outline),
+                          SizedBox(width: 8),
+                          Text('Delete private key'),
+                        ],
+                      ),
+                    ),
                   ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.key_outlined),
-                      SizedBox(width: 8),
-                      Text('Use this key'),
-                    ],
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    onPressed: () async {
+                      await Share.share(_keyController.text);
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.share),
+                        SizedBox(width: 8),
+                        Text('Share private key'),
+                      ],
+                    ),
                   ),
-                ),
-                TextButton(
-                  onPressed: _deleteText,
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.delete_outline),
-                      SizedBox(width: 8),
-                      Text('Delete key'),
-                    ],
-                  ),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    await Share.share(_keyController.text);
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.share),
-                      SizedBox(width: 8),
-                      Text('Share key'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ),
         ],
       ),

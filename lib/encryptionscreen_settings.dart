@@ -16,6 +16,7 @@ class EncryptionScreenSettings extends StatefulWidget {
 
 class EncryptionScreenSettingsState extends State<EncryptionScreenSettings> {
   final TextEditingController _keyController = TextEditingController();
+  final TextEditingController _publicKeyController = TextEditingController();
 
   var logger = Logger(
     printer: PrettyPrinter(),
@@ -26,15 +27,24 @@ class EncryptionScreenSettingsState extends State<EncryptionScreenSettings> {
     super.initState();
     // Lade den gespeicherten privaten Schlüssel beim Start der Seite
     loadKeyFromPreferences();
+    loadPublicKeyString();
   }
 
 // Laden
   void loadKeyFromPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? savedPrivateKey = prefs.getString('privateKey');
-    logger.i('Key loaded successfully!');
+    logger.i('Private key loaded successfully!');
     setState(() {
       _keyController.text = savedPrivateKey ?? '';
+    });
+  }
+
+  void loadPublicKeyString() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? pkeystring = prefs.getString('publicKeyString');
+    setState(() {
+      _publicKeyController.text = pkeystring ?? '';
     });
   }
 
@@ -42,6 +52,7 @@ class EncryptionScreenSettingsState extends State<EncryptionScreenSettings> {
     setState(() {
       generateNewKeyPair();
       loadKeyFromPreferences();
+      loadPublicKeyString();
     });
   }
 
@@ -54,92 +65,205 @@ class EncryptionScreenSettingsState extends State<EncryptionScreenSettings> {
       body: ListView(
         padding: const EdgeInsets.all(8.0),
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SingleChildScrollView(
-                    child: SizedBox(
-                      height: 200,
-                      child: TextField(
-                        controller: _keyController,
-                        maxLines: null,
-                        expands: true,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Key',
-                          labelStyle: TextStyle(color: Colors.white),
-                        ),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SingleChildScrollView(
+                  child: SizedBox(
+                    height: 100,
+                    child: TextField(
+                      controller: _publicKeyController,
+                      maxLines: null,
+                      expands: true,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Public Key',
+                        labelStyle: TextStyle(color: Colors.white),
                       ),
                     ),
                   ),
-                  TextButton(
-                    //Hier ist der Knopf zum generieren
-                    onPressed: updateGeneratedKey,
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () async {
+                          convertAndSavePublicKeyString(
+                              _publicKeyController.text);
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.lock_outline),
+                            SizedBox(width: 8),
+                            Text('Use this public key'),
+                          ],
+                        ),
+                      ),
                     ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.key_outlined),
-                        SizedBox(width: 8),
-                        Text('Generate new key'),
-                      ],
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () async {
+                          await Clipboard.setData(
+                            ClipboardData(text: _publicKeyController.text),
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.content_copy),
+                            SizedBox(width: 8),
+                            Text('Copy public key'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () async {
+                          await Share.share(_publicKeyController.text);
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.share),
+                            SizedBox(width: 8),
+                            Text('Share public key'),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () async {
+                          savePublicKeyString('');
+                          _publicKeyController.clear();
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.delete_outline),
+                            SizedBox(width: 8),
+                            Text('Delete public key'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                //Private Key Part
+                SingleChildScrollView(
+                  child: SizedBox(
+                    height: 100,
+                    child: TextField(
+                      controller: _keyController,
+                      maxLines: null,
+                      expands: true,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Private Key',
+                        labelStyle: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ),
-                  TextButton(
-                    onPressed: () async {
-                      await Clipboard.setData(
-                        ClipboardData(text: _keyController.text),
-                      );
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () async {
+                          // Speichere den privaten Schlüssel
+                          saveDecryptionPrivateKey(_keyController.text);
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.lock_open_outlined),
+                            SizedBox(width: 8),
+                            Text('Use this private key'),
+                          ],
+                        ),
+                      ),
                     ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.content_copy),
-                        SizedBox(width: 8),
-                        Text('Copy key'),
-                      ],
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () async {
+                          await Clipboard.setData(
+                            ClipboardData(text: _keyController.text),
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.content_copy),
+                            SizedBox(width: 8),
+                            Text('Copy private key'),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      await Share.share(_keyController.text);
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () async {
+                          await Share.share(_keyController.text);
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.share),
+                            SizedBox(width: 8),
+                            Text('Share private key'),
+                          ],
+                        ),
+                      ),
                     ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.share),
-                        SizedBox(width: 8),
-                        Text('Share key'),
-                      ],
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      //Hier ist der Knopf zum generieren
+                      onPressed: updateGeneratedKey,
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.key_outlined),
+                          SizedBox(width: 8),
+                          Text('Generate new key pair'),
+                        ],
+                      ),
                     ),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      // Speichere den privaten Schlüssel
-                      saveDecryptionPrivateKey(_keyController.text);
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.lock_open_outlined),
-                        SizedBox(width: 8),
-                        Text('Use same key for Decryption'),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],

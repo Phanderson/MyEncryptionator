@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:pointycastle/export.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'storage.dart';
 import 'package:logger/logger.dart';
 // ignore: implementation_imports
@@ -80,7 +81,7 @@ Uint8List _processInBlocks(AsymmetricBlockCipher engine, Uint8List input) {
 //==============Meine Methoden==============
 
 Future<RSAPrivateKey> convertPrivateKey(String keyText) async {
-  logger.i("Converting key...");
+  logger.i("Converting private key...");
   // Extrahiere Private Exponent
   String privateExponentString =
       extractValueBetween(keyText, 'Private Exponent: ', 'Modulus: ');
@@ -112,6 +113,30 @@ Future<RSAPrivateKey> convertPrivateKey(String keyText) async {
 
   RSAPrivateKey privateKey = RSAPrivateKey(modulus, privateExponent, p, q);
   return privateKey;
+}
+
+void convertAndSavePublicKeyString(String keyText) async {
+  logger.i("Converting public key...");
+  try {
+    // Extrahiere Private Exponent
+    String publicExponentString =
+        extractValueBetween(keyText, 'Public Exponent: ', 'M: ');
+    publicExponentString = publicExponentString.replaceAll(' ', '');
+
+    // Extrahiere Modulus
+    String modulusString = keyText.substring(keyText.indexOf('M: ') + 3);
+    modulusString = modulusString.replaceAll(' ', '');
+
+    logger.i('Private Exponent: $publicExponentString');
+    logger.i('Modulus: $modulusString');
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    prefs.setString('modulus', publicExponentString);
+    prefs.setString('publicExponent', modulusString);
+  } catch (e) {
+    throw ('Invalid public key.');
+  }
 }
 
 String extractValueBetween(String text, String start, String end) {
@@ -153,7 +178,7 @@ Future<String> encryptText(textToEncrypt, RSAPublicKey publicKey) async {
   return base64.encode(encryptedData);
 }
 
-//Schlüssel erstellen
+//Neues Schlüsselpaar erstellen und Speichern
 void generateNewKeyPair() {
   final pair = generateRSAkeyPair(exampleSecureRandom());
   final private = pair.privateKey;
@@ -172,6 +197,8 @@ void generateNewKeyPair() {
       generatePrivateKeyString(privateExponent, modulus, primeP, primeQ),
       publicModulus,
       publicExponent);
+
+  savePublicKeyString('Public Exponent: $publicExponent\nM: $publicModulus');
 }
 
 String generatePrivateKeyString(

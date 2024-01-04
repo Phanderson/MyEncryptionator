@@ -57,3 +57,10 @@ void saveEncryptionKey(privateKey, publicModulus, publicExponent) async {
   prefs.setString('publicExponent', publicExponent);
   logger.i('Key saved successfully!');
 }
+
+// Speichern
+void savePublicKeyString(publicKeyString) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.setString('publicKeyString', publicKeyString);
+  logger.i('Public key String saved successfully!');
+}
