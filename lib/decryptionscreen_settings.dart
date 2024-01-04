@@ -35,6 +35,13 @@ class DecryptionScreenSettingsState extends State<DecryptionScreenSettings> {
     });
   }
 
+  void _deleteText() {
+    setState(() {
+      saveDecryptionPrivateKey('');
+      loadPrivateKeyForDecryptionSettings();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,11 +88,7 @@ class DecryptionScreenSettingsState extends State<DecryptionScreenSettings> {
                   ),
                 ),
                 TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _keyController.clear();
-                    });
-                  },
+                  onPressed: _deleteText,
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.white,
                   ),
