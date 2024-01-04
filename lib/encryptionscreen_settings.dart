@@ -56,6 +56,17 @@ class EncryptionScreenSettingsState extends State<EncryptionScreenSettings> {
     });
   }
 
+  void _deleteText() async {
+    //Löscht Key und Textinhalt
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('modulus', '');
+    prefs.setString('publicExponent', '');
+    savePublicKeyString('');
+    setState(() {
+      loadPublicKeyString();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -147,10 +158,7 @@ class EncryptionScreenSettingsState extends State<EncryptionScreenSettings> {
                     ),
                     Expanded(
                       child: TextButton(
-                        onPressed: () async {
-                          savePublicKeyString('');
-                          _publicKeyController.clear();
-                        },
+                        onPressed: _deleteText,
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.white,
                         ),
