@@ -118,22 +118,31 @@ Future<RSAPrivateKey> convertPrivateKey(String keyText) async {
 void convertAndSavePublicKeyString(String keyText) async {
   logger.i("Converting public key...");
   try {
-    // Extrahiere Private Exponent
-    String publicExponentString =
-        extractValueBetween(keyText, 'Public Exponent: ', 'M: ');
-    publicExponentString = publicExponentString.replaceAll(' ', '');
+    // Teile den Text in Zeilen auf
+    List<String> lines = keyText.split('\n');
+
+    // Durchsuche die Zeilen nach dem Public Exponent
+    String publicExponentString = lines.firstWhere(
+        (line) => line.startsWith('Public Exponent:'),
+        orElse: () => '');
+
+    // Extrahiere den Wert des Public Exponent
+    publicExponentString =
+        publicExponentString.replaceAll('Public Exponent:', '').trim();
 
     // Extrahiere Modulus
-    String modulusString = keyText.substring(keyText.indexOf('M: ') + 3);
-    modulusString = modulusString.replaceAll(' ', '');
+    String modulusString = lines
+        .firstWhere((line) => line.startsWith('M:'), orElse: () => '')
+        .replaceAll('M:', '')
+        .trim();
 
-    logger.i('Private Exponent: $publicExponentString');
+    logger.i('Public Exponent: $publicExponentString');
     logger.i('Modulus: $modulusString');
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    prefs.setString('modulus', publicExponentString);
-    prefs.setString('publicExponent', modulusString);
+    prefs.setString('modulus', modulusString);
+    prefs.setString('publicExponent', publicExponentString);
   } catch (e) {
     throw ('Invalid public key.');
   }
