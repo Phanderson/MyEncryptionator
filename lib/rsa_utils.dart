@@ -170,7 +170,6 @@ Future<String> decryptText(
 
     return decryptedText;
   } catch (e) {
-    logger.e("Fehler beim Entschlüsseln des Textes: $e");
     throw ("Error decrypting the text. Key may be corrupted or wrong.");
   }
 }
